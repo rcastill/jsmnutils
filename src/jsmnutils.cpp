@@ -32,7 +32,7 @@ JSONElement JSONObject::operator[](const std::string &key) const
             }
             // Check that this is not the end (it should not)
             if (i + 1 == m_toksize) {
-                return JSONElement(nullptr, 0, nullptr);
+                throw jsmn_key_not_found_ex;
             }
             return JSONElement(m_tokens + i + 1,
                     m_toksize - i - 1, m_buffer);
