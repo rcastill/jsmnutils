@@ -1,0 +1,16 @@
+{
+    "bind": "tcp://localhost",
+
+    "flows": [
+        {
+            "name": "flow1",
+            "port": 5000,
+            "file": "movie.mp4"
+        },
+        {
+            "name": "flow2",
+            "port": 5428,
+            "file": "Devin Townsend.mkv"
+        }
+    ]
+}
