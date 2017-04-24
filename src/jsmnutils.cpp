@@ -2,6 +2,7 @@
 #include <fstream>
 #include <vector>
 #include <cstring>
+#include <cstdlib>
 
 // Exceptions
 JSMNUtilsEx jsmn_invalid_type_ex("Invalid lvalue type.");
@@ -15,28 +16,18 @@ JSONObject::JSONObject(jsmntok_t *tokens, size_t toksize, const char *buffer) :
 {
 }
 
+#include <iostream>
 JSONElement JSONObject::operator[](const std::string &key) const
 {
     // Iterate over the tokens
-    for (int i = 0; i < m_toksize; i++) {
-        // Check if this token is the key we are looking for
-        if (strncmp(key.c_str(), m_buffer + m_tokens[i].start, m_tokens[i].end - m_tokens[i].start) == 0) {
-            // Check size - strn* strikes again
-            if (key.size() != m_tokens[i].end - m_tokens[i].start) {
-                continue;
-            }
-            // Check this token has children
-            if (m_tokens[i].size == 0) {
-                // not a key
-                continue;
-            }
-            // Check that this is not the end (it should not)
-            if (i + 1 == m_toksize) {
-                throw jsmn_key_not_found_ex;
-            }
+    // First one is the object
+    for (int i = 1; i < m_tokens[0].size * 2; i += 2) {
+        std::string cur_key(m_buffer + m_tokens[i].start,
+                m_tokens[i].end - m_tokens[i].start);
+        if (cur_key == key) {
             return JSONElement(m_tokens + i + 1,
                     m_toksize - i - 1, m_buffer);
-        }
+        }            
     }
     // Could not find key
     throw jsmn_key_not_found_ex;
@@ -91,8 +82,8 @@ JSONElement::JSONElement(jsmntok_t *tokens, size_t toksize, const char *buffer) 
 
 bool JSONElement::is_valid() const
 {
-    return m_tokens != nullptr &&
-        m_toksize > 0 && m_buffer != nullptr;
+    return m_tokens != NULL &&
+        m_toksize > 0 && m_buffer != NULL;
 }
 
 JSONElement::operator JSONObject()
@@ -150,7 +141,7 @@ JSONElement::operator int()
 }            
 
 JSONParser::JSONParser() :
-    m_tokens(nullptr),
+    m_tokens(NULL),
     m_toksize(0),
     m_buffer_loaded(false)
 {
@@ -164,7 +155,7 @@ JSONParser::~JSONParser()
 
 void JSONParser::load_file(std::string filename)
 {
-    std::ifstream is(filename);
+    std::ifstream is(filename.c_str());
     // If couldn't load
     if (!is) {
         return;
@@ -178,8 +169,8 @@ void JSONParser::load_file(std::string filename)
             m_buffer.resize(m_buffer.size() +
                     m_buffer.size() / 2, 0);
         }
-        len += is.read(&m_buffer[len], m_buffer.size())
-            .gcount();
+        len += is.read(&m_buffer[len],
+                m_buffer.size() - len).gcount();
     }
     m_buffer.resize(len);
     m_buffer_loaded = true;
@@ -197,7 +188,7 @@ JSONElement JSONParser::parse()
     int toksize = jsmn_parse(&m_parser, &m_buffer[0],
             m_buffer.size() - 1, NULL, 0);
     if (toksize < 0) {
-        return JSONElement(nullptr, 0, nullptr);
+        return JSONElement(NULL, 0, NULL);
     }
     delete[] m_tokens;
     m_tokens = new jsmntok_t[toksize];
